@@ -6,6 +6,6 @@
   $response = $sqs->get_queue_size($IHQueue);
 
   // Success?
-  :var_dump($response);
+  var_dump($response);
 
 ?>
