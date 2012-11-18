@@ -160,7 +160,8 @@
 		else
 		{
 		    echo "ERROR: The workflow execution has failed to start.";
-        var_dump($workflow);
+		    #need to find a better way to error out on existing jobs vs actuall breakage.
+        #var_dump($workflow);
 		}
   }
 
