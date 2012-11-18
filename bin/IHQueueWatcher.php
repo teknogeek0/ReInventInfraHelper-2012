@@ -160,8 +160,7 @@
 		else
 		{
 		    echo "ERROR: The workflow execution has failed to start.";
-                var_dump($workflow);
-		    exit;
+        var_dump($workflow);
 		}
   }
 

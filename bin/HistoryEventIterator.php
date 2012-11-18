@@ -13,7 +13,10 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-require_once dirname(dirname(dirname(dirname(__FILE__)))) . DIRECTORY_SEPARATOR . 'sdk.class.php';
+
+## pull in the required libs and supporting files we'll need to talk to AWS services
+  require_once 'AWSSDKforPHP/sdk.class.php';
+  require_once 'IHResources.php';
 
 /*
  * When histories become long, you may need to paginate through the events
