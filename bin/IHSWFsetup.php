@@ -104,7 +104,7 @@
 		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE
 			));
 			 
-			if ($domain->isOK())
+			if ($workflow_type->isOK())
 			{
 			    echo 'Waiting for the activity type $activity_type_name to become ready...' . PHP_EOL;
 			 
