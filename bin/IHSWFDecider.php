@@ -8,8 +8,8 @@
 	$swf = new AmazonSWF();
 	$workflow_domain = $IHSWFDomain;
 	$workflow_type_name = "IHWorkFlowMain";
-	$activity_task_list
-	$decider_task_list
+	$activity_task_list = "mainWorkFlowTaskList";
+	$decider_task_list = "mainWorkFlowTaskList";
 
 	##require_once 'HistoryEventIterator.php';
   
@@ -23,6 +23,7 @@
   $response = $swf->poll_for_decision_task($opts);
   if ($response->isOK())
   {
+  	print_r($response->body);
   	if (!empty($task_token)) 
   	{
       if (self::DEBUG) {
