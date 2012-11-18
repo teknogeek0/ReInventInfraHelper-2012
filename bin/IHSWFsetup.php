@@ -3,10 +3,9 @@
   ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
   require_once 'IHResources.php';
-
-  $swf = new AmazonSWF();
  
 	// Setup
+	$swf = new AmazonSWF();
 	$workflow_domain = $IHSWFDomain;
 	$workflow_type_name = "IHWorkFlowMain";
 
@@ -41,8 +40,11 @@
 		    'domain'             => $workflow_domain,
 		    'name'               => $workflow_type_name,
 		    'version'            => '1.0',
-		    'description'        => 'A test task to show how this thing works.',
-		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE
+		    'description'        => 'Infrahelper WorkFlow',
+		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE,
+        'defaultTaskList'    => array(
+        'name' => 'mainWorkFlowTaskList'
+    ),
 			));
 			 
 			if ($workflow_type->isOK())
@@ -101,7 +103,10 @@
 		    'name'               => $activity_type_name,
 		    'version'            => '1.0',
 		    'description'        => $activity_type_description,
-		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE
+		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE,
+		    'defaultTaskList'    => array(
+		        'name' => 'mainWorkFlowTaskList'
+		    ),
 			));
 			 
 			if ($workflow_type->isOK())

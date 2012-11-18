@@ -39,22 +39,22 @@
 
 					if ( $eventType == "autoscaling:EC2_INSTANCE_LAUNCH" )
 					{
-						echo "this is a launch of a new instance";
+						echo "Notification of launch of a new instance" . PHP_EOL;
 						
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_LAUNCH_ERROR" )
 					{
-						echo "this is a failed launch of a new instance";
+						echo "Notification of a failed launch of a new instance" . PHP_EOL;
 						
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE" )
 					{
-						echo "this is an instance termination";
+						echo "Notification of an instance termination" . PHP_EOL;
 						
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE_ERROR" )
 					{
-						echo "this is an error of a terminate instance";
+						echo "Notification of an error of a terminate instance" . PHP_EOL;
 						
 					}
 					else
@@ -105,6 +105,40 @@
     	var_dump($DelResponse);
     	exit;
     }
+  }
+
+  ##Setup
+	$swf = new AmazonSWF();
+	$workflow_domain = $IHSWFDomain;
+	$workflow_type_name = "IHWorkFlowMain";
+
+  function CheckSWF($swf, $workflow_domain, $workflow_type_name)
+  {
+  	$describe = $swf->describe_workflow_type(array(
+	    'domain'       => $workflow_domain,
+	    'workflowType' => array(
+	        'name'    => $workflow_type_name,
+	        'version' => '1.0'
+	    )
+	  ));
+
+    if (isset($describe->body->typeInfo))
+    {
+      $typeInfo = $describe->body->typeInfo->to_array();
+      $MyStatus = $typeInfo["status"];
+		  if ($MyStatus == "REGISTERED")
+		  {
+		    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
+		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
+		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "Map routes in a VPC due to an instance change");
+		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "Remove Chef nodes and clients in response to an instance no longer existing");
+		    echo "All done with creating the WorkFlow and Activity Types" . PHP_EOL;
+		  }
+		}
+	  else
+	  {
+
+	  }
   }
 
 ?>
