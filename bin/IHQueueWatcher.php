@@ -77,7 +77,7 @@
 		    print_r($message_attrs);
 		    
 		  }
-		  ##DeleteFromSQS($IHQueue,$rcpt_hand);
+		  DeleteFromSQS($sqs, $IHQueue,$rcpt_hand);
 		}
 		else
 		{
@@ -93,7 +93,7 @@
   }
 
   #delete the message we just pulled from the queue
-  function DeleteFromSQS($queue_url, $receipt_handle)
+  function DeleteFromSQS($sqs, $queue_url, $receipt_handle)
   {
     $DelResponse = $sqs->delete_message($queue_url, $receipt_handle);
     if ( $DelResponse->isOK())
@@ -140,7 +140,7 @@
 		echo "Starting a new workflow execution..." . PHP_EOL;
 		$workflow = $swf->start_workflow_execution(array(
 	    'domain'       => $workflow_domain,
-	    'workflowId'   => $eventType.":".$instanceID,
+	    'workflowId'   => $instanceID,
 	    'workflowType' => array(
         'name'    => $workflow_type_name,
         'version' => '1.0'
@@ -150,15 +150,15 @@
 	    'executionStartToCloseTimeout' => '300000',
 	    'input' => "EventType=".$eventType.":Instance=".$instanceID,
 		));
-		 
+		
 		if ($workflow->isOK())
 		{
 		    echo "The workflow execution has started..." . PHP_EOL;
-		    exit;
 		}
 		else
 		{
 		    echo "ERROR: The workflow execution has failed to start.";
+                var_dump($workflow);
 		    exit;
 		}
   }
