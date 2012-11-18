@@ -20,7 +20,9 @@
 	    )
 	  ));
 
-	  if (isset($describe->body->typeInfo) && ($describe->body->typeInfo->to_array() == "REGISTERED"))
+    $typeInfo = $describe->body->typeInfo->to_array();
+    $MyStatus = $typeInfo["status"];
+	  if (isset($describe->body->typeInfo) && ($MyStatus == "REGISTERED"))
 	  {
 	    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
 	  }
