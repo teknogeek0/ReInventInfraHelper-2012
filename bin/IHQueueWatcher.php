@@ -33,29 +33,26 @@
 			  {
 					##grab some variables that we'll need to pass on to SWF
 					$instanceID = $message_attrs["EC2InstanceId"];
-					$ASGroupName = $message_attrs["AutoScalingGroupName"];
-					$StartTime = $message_attrs["StartTime"];
-					$EndTime = $message_attrs["EndTime"];
 
 					if ( $eventType == "autoscaling:EC2_INSTANCE_LAUNCH" )
 					{
 						echo "Notification of launch of a new instance" . PHP_EOL;
-						
+						AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_LAUNCH_ERROR" )
 					{
 						echo "Notification of a failed launch of a new instance" . PHP_EOL;
-						
+						AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE" )
 					{
 						echo "Notification of an instance termination" . PHP_EOL;
-						
+						AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE_ERROR" )
 					{
 						echo "Notification of an error of a terminate instance" . PHP_EOL;
-						
+						AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
 					}
 					else
 					{
@@ -75,7 +72,7 @@
 		    print_r($message_attrs);
 		    
 		  }
-		  DeleteFromSQS($IHQueue,$rcpt_hand);
+		  ##DeleteFromSQS($IHQueue,$rcpt_hand);
 		}
 		else
 		{
@@ -128,17 +125,42 @@
       $MyStatus = $typeInfo["status"];
 		  if ($MyStatus == "REGISTERED")
 		  {
-		    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
-		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
-		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "Map routes in a VPC due to an instance change");
-		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "Remove Chef nodes and clients in response to an instance no longer existing");
-		    echo "All done with creating the WorkFlow and Activity Types" . PHP_EOL;
+		    echo "The domain and workflow exists, so we can add executions now." . PHP_EOL;
 		  }
 		}
 	  else
 	  {
-
+	  	echo "Something go boom :(" . PHP_EOL;
+	  	exit;
 	  }
+  }
+
+  function AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID)
+  {
+		echo "Starting a new workflow execution..." . PHP_EOL;
+		$workflow = $swf->start_workflow_execution(array(
+	    'domain'       => $workflow_domain,
+	    'workflowId'   => $eventType.":".$instanceID,
+	    'workflowType' => array(
+        'name'    => $workflow_type_name,
+        'version' => '1.0'
+	    ),
+	    'childPolicy'  => AmazonSWF::POLICY_TERMINATE,
+	    'taskStartToCloseTimeout'      => "NONE",
+	    'executionStartToCloseTimeout' => '300000',
+	    'input' => "EventType=".$eventType.":Instance=".$instanceID,
+		));
+		 
+		if ($workflow->isOK())
+		{
+		    echo "The workflow execution has started..." . PHP_EOL;
+		    exit;
+		}
+		else
+		{
+		    echo "ERROR: The workflow execution has failed to start.";
+		    exit;
+		}
   }
 
 ?>
