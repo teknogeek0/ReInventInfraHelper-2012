@@ -4,6 +4,11 @@
   require_once 'AWSSDKforPHP/sdk.class.php';
   require_once 'IHResources.php';
 
+  // Setup
+	$swf = new AmazonSWF();
+	$workflow_domain = $IHSWFDomain;
+	$workflow_type_name = "IHWorkFlowMain";
+
   ##try and connect to SQS and get a message!
   $sqs = new AmazonSQS();
   $response = $sqs->receive_message($IHQueue);
@@ -103,11 +108,6 @@
     	exit;
     }
   }
-
-  ##Setup
-	$swf = new AmazonSWF();
-	$workflow_domain = $IHSWFDomain;
-	$workflow_type_name = "IHWorkFlowMain";
 
   function CheckSWF($swf, $workflow_domain, $workflow_type_name)
   {
