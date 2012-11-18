@@ -47,7 +47,7 @@
 			 
 			if ($workflow_type->isOK())
 			{
-			    echo 'Waiting for the workflow type to become ready...' . PHP_EOL;
+			    echo "Waiting for the workflow type to become ready..." . PHP_EOL;
 			 
 			    do {
 			        sleep(1);
@@ -62,12 +62,12 @@
 			    }
 			    while ((string) $describe->body->typeInfo->status !== AmazonSWF::STATUS_REGISTERED);
 			 
-			    echo 'Worktype flow was created successfully.' . PHP_EOL;
+			    echo "Workflow type $workflow_type_name was created successfully." . PHP_EOL;
 
 			}
 			else
 			{
-			  echo "Workflow type creation failed." . PHP_EOL;
+			  echo "Workflow type $workflow_type_name creation failed." . PHP_EOL;
 			  exit;
 			}
 		} 
@@ -106,7 +106,7 @@
 			 
 			if ($workflow_type->isOK())
 			{
-			    echo 'Waiting for the activity type $activity_type_name to become ready...' . PHP_EOL;
+			    echo "Waiting for the activity type $activity_type_name to become ready..." . PHP_EOL;
 			 
 			    do {
 			        sleep(1);
@@ -121,11 +121,11 @@
 			    }
 			    while ((string) $describe->body->typeInfo->status !== AmazonSWF::STATUS_REGISTERED);
 			 
-			    echo 'Activity type $activity_type_name was created successfully.' . PHP_EOL;
+			    echo "Activity type $activity_type_name was created successfully." . PHP_EOL;
 			}
 			else
 			{
-			    echo 'Activity type $activity_type_name creation failed.';
+			    echo "Activity type $activity_type_name creation failed.";
 			}
 	  }
   }
