@@ -10,7 +10,7 @@
 	$workflow_domain = $IHSWFDomain;
 	$workflow_type_name = "IHWorkFlowMain";
 
-	function makeworkflowtype()
+	function makeworkflowtype($swf, $workflow_domain, $workflow_type_name)
 	{
 		$describe = $swf->describe_workflow_type(array(
 	    'domain'       => $workflow_domain,
@@ -63,6 +63,6 @@
   }
 
 ##run makeworkflowtype
-makeworkflowtype();
+makeworkflowtype($swf, $workflow_domain, $workflow_type_name);
 
 ?>
