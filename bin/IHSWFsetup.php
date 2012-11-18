@@ -70,7 +70,7 @@
 		} 
   }
 
-  function MakeActivity($swf, $workflow_domain, $workflow_type_name, $activity_type_name, $activity_type_description);
+  function MakeActivity($swf, $workflow_domain, $workflow_type_name, $activity_type_name, $activity_type_description)
   {
     $describe = $swf->describe_activity_type(array(
     'domain'       => $workflow_domain,
