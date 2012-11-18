@@ -8,5 +8,40 @@
 	$swf = new AmazonSWF();
 	$workflow_domain = $IHSWFDomain;
 	$workflow_type_name = "IHWorkFlowMain";
+	$activity_task_list
+	$decider_task_list
+
+	##require_once 'HistoryEventIterator.php';
+  
+  $opts = array(
+    'domain' => $workflow_domain,
+    'taskList' => array(
+        'name' => "mainWorkFlowTaskList"
+    )
+  );
+
+  $response = $swf->poll_for_decision_task($opts);
+  if ($response->isOK())
+  {
+  	if (!empty($task_token)) 
+  	{
+      if (self::DEBUG) {
+          echo "Got history; handing to decider\n";
+      }
+      
+      $history = $response->body->events();
+
+    }
+    else 
+    {
+      echo "PollForDecisionTask received empty response\n";
+    }
+  }
+  else
+  {
+  	echo 'ERROR: ';
+    print_r($response->body);
+    exit;
+  }
 
 ?>
