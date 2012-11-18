@@ -20,13 +20,16 @@
 	    )
 	  ));
 
-    $typeInfo = $describe->body->typeInfo->to_array();
-    $MyStatus = $typeInfo["status"];
-	  if (isset($describe->body->typeInfo) && ($MyStatus == "REGISTERED"))
-	  {
-	    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
-	    MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
-	  }
+    if (isset($describe->body->typeInfo))
+    {
+      $typeInfo = $describe->body->typeInfo->to_array();
+      $MyStatus = $typeInfo["status"];
+		  if ($MyStatus == "REGISTERED")
+		  {
+		    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
+		    MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
+		  }
+		}
 	  else
 	  {
 			##Register a new workflow type
@@ -77,12 +80,19 @@
     )
     ));
     
-    var_dump($describe);
-    exit;
-    if (true == true)
+    if (isset($describe->body->typeInfo))
     {
+      $typeInfo = $describe->body->typeInfo->to_array();
+      $MyStatus = $typeInfo["status"];
+		  if ($MyStatus == "REGISTERED")
+		  {
+		    echo "The Activity $activity_type_name exists. Moving on." . PHP_EOL;
+		  }
+		}
+	  else
+	  {
 	    ##Register a new activity type
-			echo '# Registering a new activity type...' . PHP_EOL;
+			echo "Registering a new activity type..." . PHP_EOL;
 			$workflow_type = $swf->register_activity_type(array(
 		    'domain'             => $workflow_domain,
 		    'name'               => $activity_type_name,
