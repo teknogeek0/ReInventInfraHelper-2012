@@ -25,6 +25,7 @@
 	  if (isset($describe->body->typeInfo) && ($MyStatus == "REGISTERED"))
 	  {
 	    echo "The workflow exists, so move on to creating the Activities" . PHP_EOL;
+	    MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
 	  }
 	  else
 	  {
@@ -56,13 +57,66 @@
 			    while ((string) $describe->body->typeInfo->status !== AmazonSWF::STATUS_REGISTERED);
 			 
 			    echo 'Worktype flow was created successfully.' . PHP_EOL;
+
 			}
 			else
 			{
 			  echo "Workflow type creation failed." . PHP_EOL;
+			  exit;
 			}
 		} 
   }
+
+  function MakeActivity($swf, $workflow_domain, $workflow_type_name, $activity_type_name, $activity_type_description);
+  {
+    $describe = $swf->describe_activity_type(array(
+    'domain'       => $workflow_domain,
+    'activityType' => array(
+        'name'    => $activity_type_name,
+        'version' => '1.0'
+    )
+    ));
+    
+    var_dump($describe);
+    exit;
+    if (true == true)
+    {
+	    ##Register a new activity type
+			echo '# Registering a new activity type...' . PHP_EOL;
+			$workflow_type = $swf->register_activity_type(array(
+		    'domain'             => $workflow_domain,
+		    'name'               => $activity_type_name,
+		    'version'            => '1.0',
+		    'description'        => $activity_type_description,
+		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE
+			));
+			 
+			if ($domain->isOK())
+			{
+			    echo 'Waiting for the activity type $activity_type_name to become ready...' . PHP_EOL;
+			 
+			    do {
+			        sleep(1);
+			 
+			        $describe = $swf->describe_activity_type(array(
+			            'domain'       => $workflow_domain,
+			            'activityType' => array(
+			                'name'    => $activity_type_name,
+			                'version' => '1.0'
+			            )
+			        ));
+			    }
+			    while ((string) $describe->body->typeInfo->status !== AmazonSWF::STATUS_REGISTERED);
+			 
+			    echo 'Activity type $activity_type_name was created successfully.' . PHP_EOL;
+			}
+			else
+			{
+			    echo 'Activity type $activity_type_name creation failed.';
+			}
+	  }
+  }
+
 
 ##run makeworkflowtype
 makeworkflowtype($swf, $workflow_domain, $workflow_type_name);
