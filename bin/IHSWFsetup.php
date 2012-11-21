@@ -136,7 +136,7 @@
   function DoMakeActivities($swf, $workflow_domain, $workflow_type_name)
   {
   	MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
-  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckDis", "Disable Source/Destination Check");
+  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckSet", "Disable Source/Destination Check");
 		MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "Map routes in a VPC due to an instance change");
 		MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "Remove Chef nodes and clients in response to an instance no longer existing");
 		echo "All done with creating the WorkFlow and Activity Types" . PHP_EOL;

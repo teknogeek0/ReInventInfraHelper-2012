@@ -10,7 +10,7 @@
   $workflow_type_name = "IHWorkFlowMain";
 
 
-  $ACTIVITY_NAME = "EIPMapper";
+  $ACTIVITY_NAME = "SrcDestCheckSet";
   $ACTIVITY_VERSION = "1.0";
   $DEBUG = false;
 
@@ -73,45 +73,26 @@
   {
     if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $input, $matches))
     {
-      $ASaction=$matches[1];
       $MyInstance=$matches[2];
 
       $ec2 = new AmazonEC2();
-      $eip_opt = array(
-      'Domain'=> "vpc"
+      
+      $ec2_opt = array(
+      'SourceDestCheck.Value'=> "false"
       );
       
-      $response = $ec2->allocate_address($eip_opt);
+      $response = $ec2->modify_instance_attribute($MyInstance, $ec2_opt);
 
       if($response->isOK())
       {
-        $bodyarray=$response->body->to_array();
-        $MyIpAddr=$bodyarray["publicIp"];
-        $MyAllocId=$bodyarray["allocationId"];
-
-        $assocAddr_opt = array(
-        'AllocationId'=> "$MyAllocId"
-        );
-
-        $response2 = $ec2->associate_address($MyInstance,"",$assocAddr_opt);
-        if($response2->isOK())
-        {
-          #success!
-          $successMsg="SUCCESS: Successfully created EIP with IP: ".$MyIpAddr.", and attached it to instance: ".$MyInstance.PHP_EOL;
-          echo $successMsg;
-          return $successMsg;
-        }
-        else
-        {
-          $failMsg="FAIL: There was a problem attaching the EIP to the instance." .PHP_EOL;
-          echo $failMsg;
-          var_dump($response2->body);
-          return $failMsg;
-        }
+        #success!
+        $successMsg="SUCCESS: Successfully set the Source Destination check on instance ".$MyInstance." to false." . PHP_EOL;
+        echo $successMsg;
+        return $successMsg;
       }
       else
       {
-        $failMsg="FAIL: There was a problem getting an IP address." . PHP_EOL;
+        $failMsg="FAIL: There was a problem setting the Source Destination Check to false." . PHP_EOL;
         echo $failMsg;
         var_dump($response->body);
         return $failMsg;
