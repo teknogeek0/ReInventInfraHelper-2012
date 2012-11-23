@@ -47,14 +47,8 @@ abstract class BasicWorkflowWorkerStates {
 class BasicWorkflowWorker {
     const DEBUG = false;
 
-    const WORKFLOW_NAME = "myWorkflowName";
-    const WORKFLOW_VERSION = "myWorkflowVersion";
-
-    const ACTIVITY_NAME_KEY = 'activityName';
-    const ACTIVITY_VERSION_KEY = 'activityVersion';
-    const ACTIVITY_TASK_LIST_KEY = 'activityTaskList';
-    const ACTIVITY_INPUT_KEY = 'activityInput';
-    const TIMER_DURATION_KEY = 'timerDuration';
+    const WORKFLOW_NAME = "IHWorkFlowMain";
+    const WORKFLOW_VERSION = "1.0";
     
     // If you increase this value, you should also
     // increase your workflow execution timeout accordingly so that a 
@@ -156,13 +150,15 @@ class BasicWorkflowWorker {
         $continue_as_new_opts = null;
         $max_event_id = 0;
 
+        echo "my history array:\n";
+        var_dump($history);
+        exit;
+
         foreach ($history as $event) {
-            self::_process_event($event, $workflow_state, $timer_opts, $activity_opts, $continue_as_new_opts, $max_event_id);
+            self::_process_event($event, $workflow_state, $activity_opts, $max_event_id);
         }
         
-        $timer_decision = wrap_decision_opts_as_decision('StartTimer', $timer_opts);
         $activity_decision = wrap_decision_opts_as_decision('ScheduleActivityTask', $activity_opts);        
-        $continue_as_new_decision = wrap_decision_opts_as_decision('ContinueAsNewWorkflowExecution', $continue_as_new_opts);
 
         if ($workflow_state === BasicWorkflowWorkerStates::START) {
             return array(
@@ -188,7 +184,7 @@ class BasicWorkflowWorker {
      * By reading events in the history, we can determine which state the workflow is in.
      * And then, based on the current state of the workflow, the decider knows what should happen next.
      */
-    protected static function _process_event($event, &$workflow_state, &$timer_opts, &$activity_opts, &$continue_as_new_opts, &$max_event_id) {
+    protected static function _process_event($event, &$workflow_state, &$activity_opts, &$max_event_id) {
         $event_type = (string) $event->eventType;
         $max_event_id = max($max_event_id, intval($event->eventId));
         
@@ -249,73 +245,9 @@ class BasicWorkflowWorker {
                 print_r($workflow_input);
             }                    
             
-            $activity_opts = BasicWorkflowWorker::create_activity_opts_from_workflow_input($workflow_input);
-            $timer_opts = BasicWorkflowWorker::create_timer_opts_from_workflow_input($workflow_input);
-            $continue_as_new_opts = BasicWorkflowWorker::create_continue_as_new_opts_from_workflow_start($event_attributes);
+            ###$activity_opts = BasicWorkflowWorker::create_activity_opts_from_workflow_input($workflow_input);
             break;
         }
-    }
-        
-    public static function create_activity_opts_from_workflow_input($input) {
-        $activity_name = $input[BasicWorkflowWorker::ACTIVITY_NAME_KEY];
-        $activity_version = $input[BasicWorkflowWorker::ACTIVITY_VERSION_KEY];
-        $activity_task_list = $input[BasicWorkflowWorker::ACTIVITY_TASK_LIST_KEY];
-        $activity_input = $input[BasicWorkflowWorker::ACTIVITY_INPUT_KEY];
-        
-        $activity_opts = array(
-            'activityType' => array(
-                'name' => $activity_name,
-                'version' => $activity_version
-            ),
-            'activityId' => 'myActivityId-' . time(),
-            'input' => $activity_input,
-            // This is what specifying a task list at scheduling time looks like.
-            // You can also register a type with a default task list and not specify one at scheduling time.
-            // The value provided at scheduling time always takes precedence.
-            'taskList' => array('name' => $activity_task_list),
-            // This is what specifying timeouts at scheduling time looks like.
-            // You can also register types with default timeouts and not specify them at scheduling time.
-            // The value provided at scheduling time always takes precedence.
-            'scheduleToCloseTimeout' => '30',
-            'scheduleToStartTimeout' => '10',
-            'startToCloseTimeout' => '60',
-            'heartbeatTimeout' => 'NONE'
-        );
-        
-        return $activity_opts;
-    }
-    
-    public static function create_timer_opts_from_workflow_input($input) {
-        $timer_duration = (string) $input[BasicWorkflowWorker::TIMER_DURATION_KEY];
-        $timer_opts = array(
-            'startToFireTimeout' => $timer_duration,
-            'timerId' => '0'
-        );
-        
-        return $timer_opts;
-    }
-    
-    /*
-     * When you continue a workflow execution as a new workflow execution, 
-     * the start options don't carry over, so you need to specify them again.
-     */
-    public static function create_continue_as_new_opts_from_workflow_start($start_attributes) {
-        $continue_as_new_opts = array(
-            'childPolicy' => (string) $start_attributes->childPolicy,
-            'input' => (string) $start_attributes->input,
-            'workflowTypeVersion' => (string) $start_attributes->workflowType->version,
-            // This is what specifying a task list at scheduling time looks like.
-            // You can also register a type with a default task list and not specify one at scheduling time.
-            // The value provided at scheduling time always takes precedence.
-            'taskList' => array('name' => (string) $start_attributes->taskList->name),
-            // This is what specifying timeouts at scheduling time looks like.
-            // You can also register types with default timeouts and not specify them at scheduling time.
-            // The value provided at scheduling time always takes precedence.
-            'executionStartToCloseTimeout' => (string) $start_attributes->executionStartToCloseTimeout,
-            'taskStartToCloseTimeout' => (string) $start_attributes->taskStartToCloseTimeout
-        );
-        
-        return $continue_as_new_opts;
     }
 }
 
