@@ -13,8 +13,7 @@
  * express or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-## pull in the required libs and supporting files we'll need to talk to AWS services
+ ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
   require_once 'IHResources.php';
 
@@ -101,4 +100,3 @@ class HistoryEventIterator implements Iterator {
         return $this->event_index < count($this->events);
     }
 }
-?>
