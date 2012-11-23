@@ -4,6 +4,7 @@
   ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
   require_once 'IHResources.php';
+  require_once 'IHSWFDecider.php';
 
   // Setup
 	$swf = new AmazonSWF();
