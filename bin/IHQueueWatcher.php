@@ -53,7 +53,8 @@
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE" )
 					{
 						echo "Notification of an instance termination" . PHP_EOL;
-						AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
+						##AddExecution($swf, $workflow_domain, $workflow_type_name, $eventType, $instanceID);
+						##do nothing, we have no handlers yet for this.
 					}
 					elseif ( $eventType == "autoscaling:EC2_INSTANCE_TERMINATE_ERROR" )
 					{
