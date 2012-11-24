@@ -160,7 +160,7 @@ class BasicWorkflowWorker {
         ##$historyRev=array_reverse($history);
         foreach ($history as $event) {
             $event_type = (string) $event->eventType;
-            echo "This is my event type: ".$event_type.PHP_EOL;
+            ##echo "This is my event type: ".$event_type.PHP_EOL;
             self::_process_event($event, $workflow_state, $activity_opts, $max_event_id);
         }
         
@@ -241,7 +241,8 @@ class BasicWorkflowWorker {
             var_dump($event);
             $ActivityResult= $event->activityTaskCompletedEventAttributes->result;
             echo "This is my ActivityResult: ".$ActivityResult.PHP_EOL;
-            exit;
+            $activity_opts = NATThingy($event_type, $ActivityResult);
+            break;
 
         case 'WorkflowExecutionStarted':
             echo "Iam in workflow execution started, so now do something else\n";
@@ -259,6 +260,7 @@ class BasicWorkflowWorker {
             }
 
             $activity_opts = NATThingy($event_type, $event_attributes);
+            break;
         }
     }
 }
@@ -273,67 +275,27 @@ function wrap_decision_opts_as_decision($decision_type, $decision_opts)
 
 function NATThingy ($event_type, $event_attributes)
 {
-   $workflow_input = $event_attributes->input;
+    if($event_type == "WorkflowExecutionStarted")
+    {
+      $workflow_input = $event_attributes->input;
+    }
+    else
+    {
+      $workflow_input = $event_attributes;
+    }
 
-   if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $workflow_input, $matches))
+    if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $workflow_input, $matches))
     {
       $ASaction=$matches[1];
       $MyInstance=$matches[2];
 
       if ( $ASaction == "EC2_INSTANCE_LAUNCH")
       {
-        switch ($event_type) {
-          case 'ActivityTaskCompleted':
-            #we'll do something here
-            break;
-          case 'WorkflowExecutionStarted':
-            $activity_opts = array(
-              'activityType' => array(
-                  'name' => 'EIPMapper',
-                  'version' => '2.0'
-              ),
-              'activityId' => 'myActivityId-' . time(),
-              'input' => "$MyInstance",
-              // This is what specifying a task list at scheduling time looks like.
-              // You can also register a type with a default task list and not specify one at scheduling time.
-              // The value provided at scheduling time always takes precedence.
-              'taskList' => array('name' => 'EIPMappertasklist'),
-              // This is what specifying timeouts at scheduling time looks like.
-              // You can also register types with default timeouts and not specify them at scheduling time.
-              // The value provided at scheduling time always takes precedence.
-              'scheduleToCloseTimeout' => '300',
-              'scheduleToStartTimeout' => '300',
-              'startToCloseTimeout' => '300',
-              'heartbeatTimeout' => 'NONE'
-            );
-          
-            return $activity_opts;
-            break;
-        }
-      } 
+        create_activity_opts_from_workflow_input("EIPMapper", "2.0", $MyInstance, "EIPMappertasklist");
+      }
       elseif($ASaction == "EC2_INSTANCE_TERMINATE")
       {
-        $activity_opts = array(
-              'activityType' => array(
-                  'name' => 'ChefRemoveClientNode',
-                  'version' => '1.0'
-              ),
-              'activityId' => 'myActivityId-' . time(),
-              'input' => "$MyInstance",
-              // This is what specifying a task list at scheduling time looks like.
-              // You can also register a type with a default task list and not specify one at scheduling time.
-              // The value provided at scheduling time always takes precedence.
-              'taskList' => array('name' => 'mainWorkFlowTaskList'),
-              // This is what specifying timeouts at scheduling time looks like.
-              // You can also register types with default timeouts and not specify them at scheduling time.
-              // The value provided at scheduling time always takes precedence.
-              'scheduleToCloseTimeout' => '300',
-              'scheduleToStartTimeout' => '300',
-              'startToCloseTimeout' => '300',
-              'heartbeatTimeout' => 'NONE'
-            );
-          
-            return $activity_opts;
+        create_activity_opts_from_workflow_input("ChefRemoveClientNode", "1.0", $MyInstance, "ChefRemoveClientNodetasklist");
       }
       else
       {
@@ -342,12 +304,66 @@ function NATThingy ($event_type, $event_attributes)
         exit;
       }
     }
+    elseif (preg_match("/SUCCESS: (\w*): .*:.*: (i-.*)/", $event_attributes, $matches))
+    {
+      $justcompleted = $matches[1];
+      $MyInstance = $matches[2];
+      if ($justcompleted == "EIPmapper")
+      {
+        create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
+      }
+      elseif ($justcompleted == "SrcDestCheckSet")
+      {
+        create_activity_opts_from_workflow_input("VPCRouteMapper", "2.0", $MyInstance, "VPCRouteMappertasklist");
+      }
+      elseif ($justcompleted == "VPCRouteMapper")
+      {
+        ##now we are done, so need to signal that this job is finished.
+      }
+      elseif ($justcompleted == "ChefRemoveClientNode")
+      {
+        ##do something here, but nothing to do just yet
+      }
+    }
+    elseif (preg_match("/FAIL: (\w*):? (.*:?.*)/", $event_attributes, $matches))
+    {
+      $justcompleted = $matches[1];
+
+      echo "We failed doing what we need to do!! We were trying to $justcompleted".PHP_EOL;
+      ##need to terminate workflow?
+      exit;
+    }
     else
     {
       $failMsg="FAIL: We got input that we don't understand: ".$workflow_input. PHP_EOL;
       echo $failMsg;
       exit;
     }
+}
+
+function create_activity_opts_from_workflow_input($activityName, $activityVersion, $input, $taskList)
+{
+  $activity_opts = array(
+    'activityType' => array(
+        'name' => "$activityName",
+        'version' => "$activityVersion"
+    ),
+    'activityId' => 'myActivityId-' . time(),
+    'input' => "$MyInstance",
+    // This is what specifying a task list at scheduling time looks like.
+    // You can also register a type with a default task list and not specify one at scheduling time.
+    // The value provided at scheduling time always takes precedence.
+    'taskList' => array('name' => "$taskList"),
+    // This is what specifying timeouts at scheduling time looks like.
+    // You can also register types with default timeouts and not specify them at scheduling time.
+    // The value provided at scheduling time always takes precedence.
+    'scheduleToCloseTimeout' => '300',
+    'scheduleToStartTimeout' => '300',
+    'startToCloseTimeout' => '300',
+    'heartbeatTimeout' => 'NONE'
+  );
+
+  return $activity_opts;
 }
 
 ?>
