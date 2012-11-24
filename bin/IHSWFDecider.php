@@ -90,6 +90,8 @@ class BasicWorkflowWorker {
                     }
                                        
                     $history = $response->body->events();
+                    echo "This is my history: \n";
+                    var_dump($history);
                     
                     try {
                         $decision_list = self::_decide(new HistoryEventIterator($this->swf, $opts, $response));
@@ -118,6 +120,7 @@ class BasicWorkflowWorker {
                     
                     if ($complete_response->isOK()) {
                         echo "RespondDecisionTaskCompleted SUCCESS\n";
+                        exit;
                     } else {
                         // a real application may want to report this failure and retry
                         echo "RespondDecisionTaskCompleted FAIL\n";
@@ -150,34 +153,22 @@ class BasicWorkflowWorker {
         $continue_as_new_opts = null;
         $max_event_id = 0;
 
-        echo "my history array:\n";
-        var_dump($history);
-        exit;
+        #echo "my history array:\n";
+        #var_dump($history);
+        #exit;
 
+        ##$historyRev=array_reverse($history);
         foreach ($history as $event) {
+            $event_type = (string) $event->eventType;
+            echo "This is my event type: ".$event_type.PHP_EOL;
             self::_process_event($event, $workflow_state, $activity_opts, $max_event_id);
         }
         
         $activity_decision = wrap_decision_opts_as_decision('ScheduleActivityTask', $activity_opts);        
 
-        if ($workflow_state === BasicWorkflowWorkerStates::START) {
-            return array(
-                $timer_decision
-            );
-        } else if ($workflow_state === BasicWorkflowWorkerStates::NOTHING_OPEN) {
-            if ($max_event_id >= BasicWorkflowWorker::EVENT_THRESHOLD_BEFORE_NEW_GENERATION) {
-                return array(
-                    $continue_as_new_decision
-                );
-            } else {
-                return array(
-                    $timer_decision,
-                    $activity_decision
-                );
-            }
-        } else {
-            return array();
-        }
+        return array(
+          $activity_decision
+        );
     }
 
     /*
@@ -201,52 +192,73 @@ class BasicWorkflowWorker {
             } else if ($workflow_state === BasicWorkflowWorkerStates::ACTIVITY_OPEN) {
                 $workflow_state = BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN;
             }
-            break;
+
+            echo "Iam in TimerStarted, so now do something else\n";
+            var_dump($event);
+            
         case 'TimerFired':
             if ($workflow_state === BasicWorkflowWorkerStates::TIMER_OPEN) { 
                 $workflow_state = BasicWorkflowWorkerStates::NOTHING_OPEN;
             } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN) {
                 $workflow_state = BasicWorkflowWorkerStates::ACTIVITY_OPEN;
             }
-            break;
+
+            echo "Iam in Timer Fired, so now do something else\n";
+            var_dump($event);
+            
         case 'ActivityTaskScheduled':
             if ($workflow_state === BasicWorkflowWorkerStates::NOTHING_OPEN) {
                 $workflow_state = BasicWorkflowWorkerStates::ACTIVITY_OPEN;
             } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_OPEN) {
                 $workflow_state = BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN;
             }
-            break;
+
+            echo "Iam in activity scheduled, so now do something else\n";
+            var_dump($event);
+            
+
+            
         case 'ActivityTaskCanceled':
-            // add cancellation handling here
+            echo "Iam in activity task canceled, so now do something else\n";
+            var_dump($event);
+            
         case 'ActivityTaskFailed':
-            // add failure handling here
-            // when an activity fails, a real application may want to retry it or report the incident
+            echo "Iam in activity task failed, so now do something else\n";
+            var_dump($event);
+            
         case 'ActivityTaskTimedOut':
-            // add timeout handling here
-            // when an activity times out, a real application may want to retry it or report the incident
+            echo "Iam in activity task timed out, so now do something else\n";
+            var_dump($event);
+            
         case 'ActivityTaskCompleted':
             if ($workflow_state === BasicWorkflowWorkerStates::ACTIVITY_OPEN) { 
                 $workflow_state = BasicWorkflowWorkerStates::NOTHING_OPEN;
             } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN) {
                 $workflow_state = BasicWorkflowWorkerStates::TIMER_OPEN;
             }
-            break;
-        // This is the only case which doesn't only transition state; 
-        // it also gathers the user's workflow input.
+
+            echo "Iam in activity completed, so now do something else\n";
+            var_dump($event);
+            $ActivityResult= $event->activityTaskCompletedEventAttributes->result;
+            echo "This is my ActivityResult: ".$ActivityResult.PHP_EOL;
+            exit;
+
         case 'WorkflowExecutionStarted':
+            echo "Iam in workflow execution started, so now do something else\n";
+
             $workflow_state = BasicWorkflowWorkerStates::START;
             
             // gather gather gather
             $event_attributes = $event->workflowExecutionStartedEventAttributes;
-            $workflow_input = json_decode($event_attributes->input, true);
+            ##$workflow_input = json_decode($event_attributes->input, true);
+            $workflow_input = $event_attributes->input;
             
             if (BasicWorkflowWorker::DEBUG) {
                 echo 'Workflow input: ';
                 print_r($workflow_input);
-            }                    
-            
-            ###$activity_opts = BasicWorkflowWorker::create_activity_opts_from_workflow_input($workflow_input);
-            break;
+            }
+
+            $activity_opts = NATThingy($event_type, $event_attributes);
         }
     }
 }
@@ -257,6 +269,85 @@ function wrap_decision_opts_as_decision($decision_type, $decision_opts)
     'decisionType' => $decision_type,
     strtolower(substr($decision_type, 0, 1)) . substr($decision_type, 1) . 'DecisionAttributes' => $decision_opts
   );
+}
+
+function NATThingy ($event_type, $event_attributes)
+{
+   $workflow_input = $event_attributes->input;
+
+   if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $workflow_input, $matches))
+    {
+      $ASaction=$matches[1];
+      $MyInstance=$matches[2];
+
+      if ( $ASaction == "EC2_INSTANCE_LAUNCH")
+      {
+        switch ($event_type) {
+          case 'ActivityTaskCompleted':
+            #we'll do something here
+            break;
+          case 'WorkflowExecutionStarted':
+            $activity_opts = array(
+              'activityType' => array(
+                  'name' => 'EIPMapper',
+                  'version' => '2.0'
+              ),
+              'activityId' => 'myActivityId-' . time(),
+              'input' => "$MyInstance",
+              // This is what specifying a task list at scheduling time looks like.
+              // You can also register a type with a default task list and not specify one at scheduling time.
+              // The value provided at scheduling time always takes precedence.
+              'taskList' => array('name' => 'EIPMappertasklist'),
+              // This is what specifying timeouts at scheduling time looks like.
+              // You can also register types with default timeouts and not specify them at scheduling time.
+              // The value provided at scheduling time always takes precedence.
+              'scheduleToCloseTimeout' => '300',
+              'scheduleToStartTimeout' => '300',
+              'startToCloseTimeout' => '300',
+              'heartbeatTimeout' => 'NONE'
+            );
+          
+            return $activity_opts;
+            break;
+        }
+      } 
+      elseif($ASaction == "EC2_INSTANCE_TERMINATE")
+      {
+        $activity_opts = array(
+              'activityType' => array(
+                  'name' => 'ChefRemoveClientNode',
+                  'version' => '1.0'
+              ),
+              'activityId' => 'myActivityId-' . time(),
+              'input' => "$MyInstance",
+              // This is what specifying a task list at scheduling time looks like.
+              // You can also register a type with a default task list and not specify one at scheduling time.
+              // The value provided at scheduling time always takes precedence.
+              'taskList' => array('name' => 'mainWorkFlowTaskList'),
+              // This is what specifying timeouts at scheduling time looks like.
+              // You can also register types with default timeouts and not specify them at scheduling time.
+              // The value provided at scheduling time always takes precedence.
+              'scheduleToCloseTimeout' => '300',
+              'scheduleToStartTimeout' => '300',
+              'startToCloseTimeout' => '300',
+              'heartbeatTimeout' => 'NONE'
+            );
+          
+            return $activity_opts;
+      }
+      else
+      {
+        $failMsg="FAIL: This isn't a task we know how to understand: ".$ASaction. PHP_EOL;
+        echo $failMsg;
+        exit;
+      }
+    }
+    else
+    {
+      $failMsg="FAIL: We got input that we don't understand: ".$workflow_input. PHP_EOL;
+      echo $failMsg;
+      exit;
+    }
 }
 
 ?>
