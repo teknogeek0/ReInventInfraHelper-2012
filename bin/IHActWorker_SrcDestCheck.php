@@ -86,7 +86,7 @@
       if($response->isOK())
       {
         #success!
-        $successMsg="SUCCESS: SrcDestCheckSet: Successfully set the Source Destination check on instance ".$MyInstance." to false." . PHP_EOL;
+        $successMsg="SUCCESS: SrcDestCheckSet: Successfully set the Source Destination check to false on instance: ".$MyInstance.PHP_EOL;
         echo $successMsg;
         return $successMsg;
       }
