@@ -73,13 +73,13 @@
 		} 
   }
 
-  function MakeActivity($swf, $workflow_domain, $workflow_type_name, $activity_type_name, $activity_type_description)
+  function MakeActivity($swf, $workflow_domain, $workflow_type_name, $activity_type_name, $Goalversion, $activity_type_description)
   {
     $describe = $swf->describe_activity_type(array(
     'domain'       => $workflow_domain,
     'activityType' => array(
         'name'    => $activity_type_name,
-        'version' => '1.0'
+        'version' => "$Goalversion"
     )
     ));
     
@@ -87,9 +87,14 @@
     {
       $typeInfo = $describe->body->typeInfo->to_array();
       $MyStatus = $typeInfo["status"];
-		  if ($MyStatus == "REGISTERED")
+      $myVersion = $typeInfo["activityType"]["version"];
+		  if ($MyStatus == "REGISTERED" && $myVersion== $Goalversion)
 		  {
 		    echo "The Activity $activity_type_name exists. Moving on." . PHP_EOL;
+		  }
+		  else
+		  {
+		  	echo "Something went wrong here. Check stuff out.". PHP_EOL;
 		  }
 		}
 	  else
@@ -99,11 +104,11 @@
 			$workflow_type = $swf->register_activity_type(array(
 		    'domain'             => $workflow_domain,
 		    'name'               => $activity_type_name,
-		    'version'            => '1.0',
+		    'version'            => "$Goalversion",
 		    'description'        => $activity_type_description,
 		    'defaultChildPolicy' => AmazonSWF::POLICY_TERMINATE,
 		    'defaultTaskList'    => array(
-		        'name' => 'mainWorkFlowTaskList'
+		        'name' => "$activity_type_name"."tasklist"
 		    ),
 			));
 			 
@@ -118,7 +123,7 @@
 			            'domain'       => $workflow_domain,
 			            'activityType' => array(
 			                'name'    => $activity_type_name,
-			                'version' => '1.0'
+			                'version' => '2.0'
 			            )
 			        ));
 			    }
@@ -135,10 +140,10 @@
 
   function DoMakeActivities($swf, $workflow_domain, $workflow_type_name)
   {
-  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "Maps EIPs to Instances");
-  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckSet", "Disable Source/Destination Check");
-		MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "Map routes in a VPC due to an instance change");
-		MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "Remove Chef nodes and clients in response to an instance no longer existing");
+  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "2.0", "Maps EIPs to Instances");
+  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckSet", "2.0", "Disable Source/Destination Check");
+		MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "2.0", "Map routes in a VPC due to an instance change");
+		MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "2.0", "Remove Chef nodes and clients in response to an instance no longer existing");
 		echo "All done with creating the WorkFlow and Activity Types" . PHP_EOL;
   }
 
