@@ -97,13 +97,13 @@
         if($response2->isOK())
         {
           #success!
-          $successMsg="SUCCESS: Successfully created EIP with IP: ".$MyIpAddr.", and attached it to instance: ".$MyInstance.PHP_EOL;
+          $successMsg="SUCCESS: EIPMapper: Successfully created EIP with IP: ".$MyIpAddr.", and attached it to instance: ".$MyInstance.PHP_EOL;
           echo $successMsg;
           return $successMsg;
         }
         else
         {
-          $failMsg="FAIL: There was a problem attaching the EIP to the instance." .PHP_EOL;
+          $failMsg="FAIL: EIPMapper: There was a problem attaching the EIP to the instance." .PHP_EOL;
           echo $failMsg;
           var_dump($response2->body);
           $response3 = $ec2->release_address(array('AllocationId'=>"$MyAllocId"));
@@ -121,7 +121,7 @@
       }
       else
       {
-        $failMsg="FAIL: There was a problem getting an IP address." . PHP_EOL;
+        $failMsg="FAIL: EIPMapper: There was a problem getting an IP address." . PHP_EOL;
         echo $failMsg;
         var_dump($response->body);
         return $failMsg;
@@ -129,7 +129,7 @@
     }
     else
     {
-      $failMsg="FAIL: We got input that we don't understand: ".$input. PHP_EOL;
+      $failMsg="FAIL: EIPMapper: We got input that we don't understand: ".$input. PHP_EOL;
       echo $failMsg;
       return $failMsg;
     }
