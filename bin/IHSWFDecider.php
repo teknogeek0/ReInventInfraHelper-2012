@@ -162,9 +162,20 @@ class BasicWorkflowWorker {
             $event_type = (string) $event->eventType;
             ##echo "This is my event type: ".$event_type.PHP_EOL;
             self::_process_event($event, $workflow_state, $activity_opts, $max_event_id);
+            if($activity_opts!=null)
+            {
+              break;
+            }
         }
         
-        $activity_decision = wrap_decision_opts_as_decision('ScheduleActivityTask', $activity_opts);        
+        if (is_array($activity_opts))
+        {
+          $activity_decision = wrap_decision_opts_as_decision('ScheduleActivityTask', $activity_opts);
+        }
+        else
+        {
+          $activity_decision = array ('decisionType' => $activity_opts);
+        }
 
         return array(
           $activity_decision
@@ -286,13 +297,13 @@ function NATThingy ($event_type, $event_attributes)
       }
       elseif ($justcompleted == "VPCRouteMapper")
       {
-        $lgoMsg = "Now we need to end this workflow".PHP_EOL;
-        ##now we are done, so need to signal that this job is finished.
+        $logMsg = "Now we need to end this workflow".PHP_EOL;
+        $activity_opts = "CompleteWorkflowExecution";
       }
       elseif ($justcompleted == "ChefRemoveClientNode")
       {
-        $lgoMsg = "Now we need to end this workflow".PHP_EOL;
-        ##do something here, but nothing to do just yet
+        $logMsg = "Now we need to end this workflow".PHP_EOL;
+        $activity_opts = "CompleteWorkflowExecution";
       }
       else
       {
