@@ -45,7 +45,7 @@ class HistoryEventIterator implements Iterator {
             $this->next_page_token = null;
         }
 
-        $next_events = $response->body->events()->getArrayCopy();
+        $next_events = array_reverse($response->body->events()->getArrayCopy());
         $this->events = array_merge($this->events, $next_events);
     }
 
