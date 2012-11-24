@@ -14,7 +14,7 @@
   $ACTIVITY_VERSION = $IHACTIVITY_VERSION;
   $DEBUG = false;
 
-  $task_list="mainWorkFlowTaskList";
+  $task_list="EIPMappertasklist";
 
   $response = $swf->poll_for_activity_task(array(
       'domain' => $workflow_domain,
