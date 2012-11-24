@@ -178,6 +178,7 @@ class BasicWorkflowWorker {
     protected static function _process_event($event, &$workflow_state, &$activity_opts, &$max_event_id) {
         $event_type = (string) $event->eventType;
         $max_event_id = max($max_event_id, intval($event->eventId));
+        ##echo "DEBUG this is my max_event_id: ".$max_event_id.PHP_EOL;
         
         if (BasicWorkflowWorker::DEBUG) {
             echo "event type: $event_type\n";
@@ -193,18 +194,23 @@ class BasicWorkflowWorker {
                 $workflow_state = BasicWorkflowWorkerStates::TIMER_OPEN;
             }
 
-            echo "Iam in activity completed, so now do something else\n";
-            var_dump($event);
+            ##echo "Iam in activity completed, so now do something else\n";
+            ##var_dump($event);
             $ActivityResult= $event->activityTaskCompletedEventAttributes->result;
-            echo "This is my ActivityResult: ".$ActivityResult.PHP_EOL;
+            ##echo "This is my ActivityResult: ".$ActivityResult.PHP_EOL;
             $activity_opts = NATThingy($event_type, $ActivityResult);
             break;
 
           case 'WorkflowExecutionStarted':
-            echo "I am in workflow execution started, so now do something else\n";
+            ##echo "I am in workflow execution started, so now do something else\n";
 
             $workflow_state = BasicWorkflowWorkerStates::START;
             
+            if($max_event_id>3)
+            {
+              break;
+            }
+
             // gather gather gather
             $event_attributes = $event->workflowExecutionStartedEventAttributes;
             ##$workflow_input = json_decode($event_attributes->input, true);
@@ -247,10 +253,12 @@ function NATThingy ($event_type, $event_attributes)
 
       if ( $ASaction == "EC2_INSTANCE_LAUNCH")
       {
+        $logMsg = "Doing: EIPMapper".PHP_EOL;
         $activity_opts = create_activity_opts_from_workflow_input("EIPMapper", "2.0", $MyInstance, "EIPMappertasklist");
       }
       elseif($ASaction == "EC2_INSTANCE_TERMINATE")
       {
+        $logMsg = "Doing: ChefRemoveClientNode".PHP_EOL;
         $activity_opts = create_activity_opts_from_workflow_input("ChefRemoveClientNode", "1.0", $MyInstance, "ChefRemoveClientNodetasklist");
       }
       else
@@ -259,26 +267,31 @@ function NATThingy ($event_type, $event_attributes)
         echo $failMsg;
         exit;
       }
+      echo $logMsg;
       return $activity_opts;
     }
-    elseif (preg_match("/SUCCESS: (\w*): .*:.*: (i-.*)/", $event_attributes, $matches))
+    elseif (preg_match("/SUCCESS: (\w*): .*:.*:? (i-.*)/", $event_attributes, $matches))
     {
       $justcompleted = $matches[1];
       $MyInstance = $matches[2];
       if ($justcompleted == "EIPMapper")
       {
+        $logMsg = "Doing: SrcDestCheckSet".PHP_EOL;
         $activity_opts = create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
       }
       elseif ($justcompleted == "SrcDestCheckSet")
       {
+        $logMsg = "Doing: VPCRouteMapper".PHP_EOL;
         $activity_opts = create_activity_opts_from_workflow_input("VPCRouteMapper", "2.0", $MyInstance, "VPCRouteMappertasklist");
       }
       elseif ($justcompleted == "VPCRouteMapper")
       {
+        $lgoMsg = "Now we need to end this workflow".PHP_EOL;
         ##now we are done, so need to signal that this job is finished.
       }
       elseif ($justcompleted == "ChefRemoveClientNode")
       {
+        $lgoMsg = "Now we need to end this workflow".PHP_EOL;
         ##do something here, but nothing to do just yet
       }
       else
@@ -287,6 +300,7 @@ function NATThingy ($event_type, $event_attributes)
         exit;
       }
 
+      echo $logMsg;
       return $activity_opts;
     }
     elseif (preg_match("/FAIL: (\w*):? (.*:?.*)/", $event_attributes, $matches))
