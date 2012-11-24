@@ -83,7 +83,7 @@
       
       #$response = $ec2->modify_instance_attribute($MyInstance, $ec2_opt);
 
-      if($response->isOK())
+      ##if($response->isOK())
       if(true==true)
       {
         #success!
