@@ -77,26 +77,86 @@
 
       $ec2 = new AmazonEC2();
       
-      #$ec2_opt = array(
-      #'SourceDestCheck.Value'=> "false"
-      #);
-      
-      #$response = $ec2->modify_instance_attribute($MyInstance, $ec2_opt);
+      $response = $ec2->describe_instances(array(
+        'Filter' => array(
+          array('Name' => 'instance-id', 'Value' => "$MyInstance"),
+        )
+      ));
 
-      ##if($response->isOK())
-      if(true==true)
+      if($response->isOK())
       {
-        #success!
-        $successMsg="SUCCESS: VPCRouteMapper: Successfully set the default routes in private subnets to instance: ".$MyInstance.PHP_EOL;
-        echo $successMsg;
-        return $successMsg;
+        $MyVPC = trim((string)$response->body->reservationSet->item->instancesSet->item->vpcId);
+        $MySubnet = trim((string)$response->body->reservationSet->item->instancesSet->item->subnetId);
+        
+        $response2 = $ec2->describe_subnets(array(
+        'Filter' => array(
+            array('Name' => 'vpc-id', 'Value' => $MyVPC)
+          ),
+        ));
+
+        if($response2->isOK())
+        {
+          $MySubnetSet = $response2->body->subnetSet->to_json();
+          $MydumbArray = json_decode($MySubnetSet, TRUE);
+          $MyActualSubnets = $MydumbArray["item"];
+          
+          ##find the subnet that isn't the one we're in, and make ourselves the default route for 0.0.0.0/0
+          foreach($MyActualSubnets as $Subs)
+          {
+            $currentSubNet = $Subs["subnetId"];
+
+            if ($currentSubNet != $MySubnet)
+            {
+              $response3 = $ec2->describe_route_tables(array(
+              'Filter' => array(
+                  array('Name' => 'association.subnet-id', 'Value' => $currentSubNet)
+                ),
+              ));
+              if($response3->isOK())
+              {
+                $MyRTableID = trim((string)$response3->body->routeTableSet->item->routeTableId);
+                echo "This is MyRTableID: ".$MyRTableID.PHP_EOL;
+
+                $response4 = $ec2->replace_route($MyRTableID, '0.0.0.0/0', array(
+                    'InstanceId' => $MyInstance
+                ));
+
+                if($response4->isOK())
+                {
+                  $successMsg="SUCCESS: VPCRouteMapper: Successfully set the default routes in private subnets to instance: ".$MyInstance.PHP_EOL;
+                  echo $successMsg;
+                  return $successMsg;
+                }
+                else
+                {
+                  $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                  echo $failMsg;
+                  var_dump($response4->body);
+                  return $failMsg;
+                }
+              }
+              else
+              {
+                $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                echo $failMsg;
+                var_dump($response3->body);
+                return $failMsg;
+              }
+            }
+            else
+            {
+              ##do nothing here because we don't want to change the route for our own subnet.
+            }
+          } 
+        }
+        else
+        {
+          $FailMsg = "FAIL: Unable to get information about the VPC this host is in. Something is wrong.".PHP_EOL;
+        }
       }
       else
       {
-        $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
-        echo $failMsg;
-        var_dump($response->body);
-        return $failMsg;
+        $FailMsg = "FAIL: Unable to talk to the EC2 API. Something is wrong.".PHP_EOL;
       }
     }
     else
