@@ -1,0 +1,6 @@
+MAILTO=""
+* * * * * /usr/bin/php /opt/InfraHelper/bin/IHQueueWatcher.php >>/tmp/IHstuff.log 2>&1
+* * * * * /usr/bin/php /opt/InfraHelper/bin/IHDeciderStart.php >>/tmp/IHstuff.log 2>&1
+* * * * * /usr/bin/php /opt/InfraHelper/bin/IHActWorker_EIP.php >>/tmp/IHstuff.log 2>&1
+* * * * * /usr/bin/php /opt/InfraHelper/bin/IHActWorker_SrcDestCheck.php >>/tmp/IHstuff.log 2>&1
+* * * * * /usr/bin/php /opt/InfraHelper/bin/IHActWorker_VPCRouteMapper.php >>/tmp/IHstuff.log 2>&1
