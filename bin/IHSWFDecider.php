@@ -184,53 +184,9 @@ class BasicWorkflowWorker {
             print_r($event);
         }
         
-        switch ($event_type) {
-        case 'TimerStarted':
-            if ($workflow_state === BasicWorkflowWorkerStates::NOTHING_OPEN ||
-                    $workflow_state === BasicWorkflowWorkerStates::START) { 
-                $workflow_state = BasicWorkflowWorkerStates::TIMER_OPEN;
-            } else if ($workflow_state === BasicWorkflowWorkerStates::ACTIVITY_OPEN) {
-                $workflow_state = BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN;
-            }
-
-            echo "Iam in TimerStarted, so now do something else\n";
-            var_dump($event);
-            
-        case 'TimerFired':
-            if ($workflow_state === BasicWorkflowWorkerStates::TIMER_OPEN) { 
-                $workflow_state = BasicWorkflowWorkerStates::NOTHING_OPEN;
-            } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN) {
-                $workflow_state = BasicWorkflowWorkerStates::ACTIVITY_OPEN;
-            }
-
-            echo "Iam in Timer Fired, so now do something else\n";
-            var_dump($event);
-            
-        case 'ActivityTaskScheduled':
-            if ($workflow_state === BasicWorkflowWorkerStates::NOTHING_OPEN) {
-                $workflow_state = BasicWorkflowWorkerStates::ACTIVITY_OPEN;
-            } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_OPEN) {
-                $workflow_state = BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN;
-            }
-
-            echo "Iam in activity scheduled, so now do something else\n";
-            var_dump($event);
-            
-
-            
-        case 'ActivityTaskCanceled':
-            echo "Iam in activity task canceled, so now do something else\n";
-            var_dump($event);
-            
-        case 'ActivityTaskFailed':
-            echo "Iam in activity task failed, so now do something else\n";
-            var_dump($event);
-            
-        case 'ActivityTaskTimedOut':
-            echo "Iam in activity task timed out, so now do something else\n";
-            var_dump($event);
-            
-        case 'ActivityTaskCompleted':
+        switch ($event_type)
+        {
+          case 'ActivityTaskCompleted':
             if ($workflow_state === BasicWorkflowWorkerStates::ACTIVITY_OPEN) { 
                 $workflow_state = BasicWorkflowWorkerStates::NOTHING_OPEN;
             } else if ($workflow_state === BasicWorkflowWorkerStates::TIMER_AND_ACTIVITY_OPEN) {
@@ -244,7 +200,7 @@ class BasicWorkflowWorker {
             $activity_opts = NATThingy($event_type, $ActivityResult);
             break;
 
-        case 'WorkflowExecutionStarted':
+          case 'WorkflowExecutionStarted':
             echo "I am in workflow execution started, so now do something else\n";
 
             $workflow_state = BasicWorkflowWorkerStates::START;
