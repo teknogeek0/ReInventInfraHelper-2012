@@ -254,7 +254,7 @@ function NATThingy ($event_type, $event_attributes)
       if ( $ASaction == "EC2_INSTANCE_LAUNCH")
       {
         $logMsg = "Doing: EIPMapper".PHP_EOL;
-        $activity_opts = create_activity_opts_from_workflow_input("EIPMapper", "2.0", $MyInstance, "EIPMappertasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("EIPMapper", "1.0", $MyInstance, "EIPMappertasklist");
       }
       elseif($ASaction == "EC2_INSTANCE_TERMINATE")
       {
@@ -277,12 +277,12 @@ function NATThingy ($event_type, $event_attributes)
       if ($justcompleted == "EIPMapper")
       {
         $logMsg = "Doing: SrcDestCheckSet".PHP_EOL;
-        $activity_opts = create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("SrcDestCheckSet", "1.0", $MyInstance, "SrcDestCheckSettasklist");
       }
       elseif ($justcompleted == "SrcDestCheckSet")
       {
         $logMsg = "Doing: VPCRouteMapper".PHP_EOL;
-        $activity_opts = create_activity_opts_from_workflow_input("VPCRouteMapper", "2.0", $MyInstance, "VPCRouteMappertasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("VPCRouteMapper", "1.0", $MyInstance, "VPCRouteMappertasklist");
       }
       elseif ($justcompleted == "VPCRouteMapper")
       {

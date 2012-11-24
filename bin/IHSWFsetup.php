@@ -1,5 +1,18 @@
 <?php
-
+/*
+ * Copyright 2012 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * A copy of the License is located at
+ *
+ *  http://aws.amazon.com/apache2.0
+ *
+ * or in the "license" file accompanying this file. This file is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
   ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
   require_once 'IHResources.php';
@@ -123,7 +136,7 @@
 			            'domain'       => $workflow_domain,
 			            'activityType' => array(
 			                'name'    => $activity_type_name,
-			                'version' => '2.0'
+			                'version' => '1.0'
 			            )
 			        ));
 			    }
@@ -140,10 +153,10 @@
 
   function DoMakeActivities($swf, $workflow_domain, $workflow_type_name)
   {
-  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "2.0", "Maps EIPs to Instances");
-  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckSet", "2.0", "Disable Source/Destination Check");
-		MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "2.0", "Map routes in a VPC due to an instance change");
-		MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "2.0", "Remove Chef nodes and clients in response to an instance no longer existing");
+  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "EIPMapper", "1.0", "Maps EIPs to Instances");
+  	MakeActivity($swf, $workflow_domain, $workflow_type_name, "SrcDestCheckSet", "1.0", "Disable Source/Destination Check");
+		MakeActivity($swf, $workflow_domain, $workflow_type_name, "VPCRouteMapper", "1.0", "Map routes in a VPC due to an instance change");
+		MakeActivity($swf, $workflow_domain, $workflow_type_name, "ChefRemoveClientNode", "1.0", "Remove Chef nodes and clients in response to an instance no longer existing");
 		echo "All done with creating the WorkFlow and Activity Types" . PHP_EOL;
   }
 

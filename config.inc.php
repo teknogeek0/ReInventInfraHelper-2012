@@ -2,8 +2,8 @@
 
 CFCredentials::set(array(
 	'development' => array(
-		'key' => 'AKIAIEFRMTR6AJ2T4DMQ',
-		'secret' => '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',
+		'key' => 'KEYHERE',
+		'secret' => 'SECRETHERE',
 		'default_cache_config' => '',
 		'certificate_authority' => false
 	),

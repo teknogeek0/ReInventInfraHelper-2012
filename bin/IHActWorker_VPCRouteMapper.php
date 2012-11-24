@@ -1,4 +1,18 @@
 <?php
+/*
+* Copyright 2012 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+* http://aws.amazon.com/apache2.0
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 
   ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
@@ -16,6 +30,7 @@
 
   $task_list="VPCRouteMappertasklist";
 
+  #look for something to do.
   $response = $swf->poll_for_activity_task(array(
       'domain' => $workflow_domain,
       'taskList' => array(
@@ -34,6 +49,7 @@
     if (!empty($task_token)) 
     {                    
         $activity_input = $response->body->input;
+        #now that we have input, go and pass this on to the actual brains of our worker
         $activity_output = execute_task($activity_input);
         
         $complete_opt = array(
@@ -41,6 +57,7 @@
             'result' => $activity_output
         );
         
+        #respond with the results of the actions in the execute_task
         $complete_response = $swf->respond_activity_task_completed($complete_opt);
         
         if ($complete_response->isOK())
@@ -77,6 +94,7 @@
 
       $ec2 = new AmazonEC2();
       
+      #get some information about our instance
       $response = $ec2->describe_instances(array(
         'Filter' => array(
           array('Name' => 'instance-id', 'Value' => "$MyInstance"),
@@ -88,6 +106,7 @@
         $MyVPC = trim((string)$response->body->reservationSet->item->instancesSet->item->vpcId);
         $MySubnet = trim((string)$response->body->reservationSet->item->instancesSet->item->subnetId);
         
+        ##find out the VPC's subnets based on the information we got from our instance
         $response2 = $ec2->describe_subnets(array(
         'Filter' => array(
             array('Name' => 'vpc-id', 'Value' => $MyVPC)
@@ -107,6 +126,7 @@
 
             if ($currentSubNet != $MySubnet)
             {
+              ##need to get the route_table we will modify
               $response3 = $ec2->describe_route_tables(array(
               'Filter' => array(
                   array('Name' => 'association.subnet-id', 'Value' => $currentSubNet)
@@ -114,8 +134,8 @@
               ));
               if($response3->isOK())
               {
+                #need the Route table id that we are going to modify.
                 $MyRTableID = trim((string)$response3->body->routeTableSet->item->routeTableId);
-                echo "This is MyRTableID: ".$MyRTableID.PHP_EOL;
 
                 $response4 = $ec2->replace_route($MyRTableID, '0.0.0.0/0', array(
                     'InstanceId' => $MyInstance

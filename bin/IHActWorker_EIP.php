@@ -1,4 +1,18 @@
 <?php
+/*
+* Copyright 2012 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+*
+* Licensed under the Apache License, Version 2.0 (the "License").
+* You may not use this file except in compliance with the License.
+* A copy of the License is located at
+*
+* http://aws.amazon.com/apache2.0
+*
+* or in the "license" file accompanying this file. This file is distributed
+* on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+* express or implied. See the License for the specific language governing
+* permissions and limitations under the License.
+*/
 
   ## pull in the required libs and supporting files we'll need to talk to AWS services
   require_once 'AWSSDKforPHP/sdk.class.php';
@@ -16,6 +30,7 @@
 
   $task_list="EIPMappertasklist";
 
+  #look for something to do.
   $response = $swf->poll_for_activity_task(array(
       'domain' => $workflow_domain,
       'taskList' => array(
@@ -34,6 +49,7 @@
     if (!empty($task_token)) 
     {                    
         $activity_input = $response->body->input;
+        #now that we have input, go and pass this on to the actual brains of our worker
         $activity_output = execute_task($activity_input);
         
         $complete_opt = array(
@@ -41,6 +57,7 @@
             'result' => $activity_output
         );
         
+        #respond with the results of the actions in the execute_task
         $complete_response = $swf->respond_activity_task_completed($complete_opt);
         
         if ($complete_response->isOK())
@@ -71,7 +88,6 @@
     
   function execute_task($input) 
   {
-    #if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $input, $matches))
     if($input != "")
     {
       $MyInstance=$input;
@@ -81,6 +97,7 @@
       'Domain'=> "vpc"
       );
       
+      #get an EIP, this can fail if you are near your quota for EIPs
       $response = $ec2->allocate_address($eip_opt);
 
       if($response->isOK())
@@ -93,10 +110,10 @@
         'AllocationId'=> "$MyAllocId"
         );
 
+        #we have an EIP, and an Allocation ID, so map this to our instance
         $response2 = $ec2->associate_address($MyInstance,"",$assocAddr_opt);
         if($response2->isOK())
         {
-          #success!
           $successMsg="SUCCESS: EIPMapper: Successfully created EIP with IP: ".$MyIpAddr.", and attached it to instance: ".$MyInstance.PHP_EOL;
           echo $successMsg;
           return $successMsg;
