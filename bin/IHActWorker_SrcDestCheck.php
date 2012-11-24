@@ -11,10 +11,10 @@
 
 
   $ACTIVITY_NAME = "SrcDestCheckSet";
-  $ACTIVITY_VERSION = "1.0";
+  $ACTIVITY_VERSION = $IHACTIVITY_VERSION;
   $DEBUG = false;
 
-  $task_list="mainWorkFlowTaskList";
+  $task_list="SrcDestCheckSettasklist";
 
   $response = $swf->poll_for_activity_task(array(
       'domain' => $workflow_domain,
@@ -71,9 +71,9 @@
     
   function execute_task($input) 
   {
-    if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $input, $matches))
+    if($input != "")
     {
-      $MyInstance=$matches[2];
+      $MyInstance=$input;
 
       $ec2 = new AmazonEC2();
       
@@ -86,13 +86,13 @@
       if($response->isOK())
       {
         #success!
-        $successMsg="SUCCESS: Successfully set the Source Destination check on instance ".$MyInstance." to false." . PHP_EOL;
+        $successMsg="SUCCESS: SrcDestCheckSet: Successfully set the Source Destination check on instance ".$MyInstance." to false." . PHP_EOL;
         echo $successMsg;
         return $successMsg;
       }
       else
       {
-        $failMsg="FAIL: There was a problem setting the Source Destination Check to false." . PHP_EOL;
+        $failMsg="FAIL: SrcDestCheckSet: There was a problem setting the Source Destination Check to false." . PHP_EOL;
         echo $failMsg;
         var_dump($response->body);
         return $failMsg;
@@ -100,7 +100,7 @@
     }
     else
     {
-      $failMsg="FAIL: We got input that we don't understand: ".$input. PHP_EOL;
+      $failMsg="FAIL: SrcDestCheckSet: We got input that we don't understand: ".$input. PHP_EOL;
       echo $failMsg;
       return $failMsg;
     }
