@@ -151,12 +151,16 @@
         }
         else
         {
-          $FailMsg = "FAIL: Unable to get information about the VPC this host is in. Something is wrong.".PHP_EOL;
+          $failMsg = "FAIL: Unable to get information about the VPC this host is in. Something is wrong.".PHP_EOL;
+          echo $failMsg;
+          return $failMsg;
         }
       }
       else
       {
-        $FailMsg = "FAIL: Unable to talk to the EC2 API. Something is wrong.".PHP_EOL;
+        $failMsg = "FAIL: Unable to talk to the EC2 API. Something is wrong.".PHP_EOL;
+        echo $failMsg;
+        return $failMsg;
       }
     }
     else
