@@ -245,7 +245,7 @@ class BasicWorkflowWorker {
             break;
 
         case 'WorkflowExecutionStarted':
-            echo "Iam in workflow execution started, so now do something else\n";
+            echo "I am in workflow execution started, so now do something else\n";
 
             $workflow_state = BasicWorkflowWorkerStates::START;
             
@@ -291,11 +291,11 @@ function NATThingy ($event_type, $event_attributes)
 
       if ( $ASaction == "EC2_INSTANCE_LAUNCH")
       {
-        create_activity_opts_from_workflow_input("EIPMapper", "2.0", $MyInstance, "EIPMappertasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("EIPMapper", "2.0", $MyInstance, "EIPMappertasklist");
       }
       elseif($ASaction == "EC2_INSTANCE_TERMINATE")
       {
-        create_activity_opts_from_workflow_input("ChefRemoveClientNode", "1.0", $MyInstance, "ChefRemoveClientNodetasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("ChefRemoveClientNode", "1.0", $MyInstance, "ChefRemoveClientNodetasklist");
       }
       else
       {
@@ -303,6 +303,7 @@ function NATThingy ($event_type, $event_attributes)
         echo $failMsg;
         exit;
       }
+      return $activity_opts;
     }
     elseif (preg_match("/SUCCESS: (\w*): .*:.*: (i-.*)/", $event_attributes, $matches))
     {
@@ -310,11 +311,11 @@ function NATThingy ($event_type, $event_attributes)
       $MyInstance = $matches[2];
       if ($justcompleted == "EIPmapper")
       {
-        create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
       }
       elseif ($justcompleted == "SrcDestCheckSet")
       {
-        create_activity_opts_from_workflow_input("VPCRouteMapper", "2.0", $MyInstance, "VPCRouteMappertasklist");
+        $activity_opts = create_activity_opts_from_workflow_input("VPCRouteMapper", "2.0", $MyInstance, "VPCRouteMappertasklist");
       }
       elseif ($justcompleted == "VPCRouteMapper")
       {
@@ -324,6 +325,8 @@ function NATThingy ($event_type, $event_attributes)
       {
         ##do something here, but nothing to do just yet
       }
+
+      return $activity_opts;
     }
     elseif (preg_match("/FAIL: (\w*):? (.*:?.*)/", $event_attributes, $matches))
     {
@@ -349,7 +352,7 @@ function create_activity_opts_from_workflow_input($activityName, $activityVersio
         'version' => "$activityVersion"
     ),
     'activityId' => 'myActivityId-' . time(),
-    'input' => "$MyInstance",
+    'input' => "$input",
     // This is what specifying a task list at scheduling time looks like.
     // You can also register a type with a default task list and not specify one at scheduling time.
     // The value provided at scheduling time always takes precedence.
