@@ -90,8 +90,8 @@ class BasicWorkflowWorker {
                     }
                                        
                     $history = $response->body->events();
-                    echo "This is my history: \n";
-                    var_dump($history);
+                    ##echo "This is my history: \n";
+                    ##var_dump($history);
                     
                     try {
                         $decision_list = self::_decide(new HistoryEventIterator($this->swf, $opts, $response));
@@ -309,7 +309,7 @@ function NATThingy ($event_type, $event_attributes)
     {
       $justcompleted = $matches[1];
       $MyInstance = $matches[2];
-      if ($justcompleted == "EIPmapper")
+      if ($justcompleted == "EIPMapper")
       {
         $activity_opts = create_activity_opts_from_workflow_input("SrcDestCheckSet", "2.0", $MyInstance, "SrcDestCheckSettasklist");
       }
@@ -324,6 +324,11 @@ function NATThingy ($event_type, $event_attributes)
       elseif ($justcompleted == "ChefRemoveClientNode")
       {
         ##do something here, but nothing to do just yet
+      }
+      else
+      {
+        echo "Something go boom. You broke it.".PHP_EOL;
+        exit;
       }
 
       return $activity_opts;
