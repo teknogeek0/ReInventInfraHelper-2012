@@ -11,7 +11,7 @@
 
 
   $ACTIVITY_NAME = "EIPMapper";
-  $ACTIVITY_VERSION = "1.0";
+  $ACTIVITY_VERSION = $IHACTIVITY_VERSION;
   $DEBUG = false;
 
   $task_list="mainWorkFlowTaskList";
@@ -71,10 +71,10 @@
     
   function execute_task($input) 
   {
-    if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $input, $matches))
+    #if (preg_match("/EventType=autoscaling:(.*):Instance=(.*)/", $input, $matches))
+    if($input != "")
     {
-      $ASaction=$matches[1];
-      $MyInstance=$matches[2];
+      $MyInstance=$input;
 
       $ec2 = new AmazonEC2();
       $eip_opt = array(
@@ -106,6 +106,16 @@
           $failMsg="FAIL: There was a problem attaching the EIP to the instance." .PHP_EOL;
           echo $failMsg;
           var_dump($response2->body);
+          $response3 = $ec2->release_address(array('AllocationId'=>"$MyAllocId"));
+          if($response3->isOK())
+          {
+            $failMsg.="I was able to release the IPaddress.".PHP_EOL;
+          }
+          else
+          {
+            $failMsg.="I was unable to release the IPaddress.".PHP_EOL;
+            var_dump($response3->body);
+          }
           return $failMsg;
         }
       }
