@@ -93,7 +93,7 @@
       $MyInstance=$input;
 
       $ec2 = new AmazonEC2();
-      
+
       #get some information about our instance
       $response = $ec2->describe_instances(array(
         'Filter' => array(
@@ -132,27 +132,90 @@
                   array('Name' => 'association.subnet-id', 'Value' => $currentSubNet)
                 ),
               ));
+              
               if($response3->isOK())
               {
                 #need the Route table id that we are going to modify.
                 $MyRTableID = trim((string)$response3->body->routeTableSet->item->routeTableId);
 
-                $response4 = $ec2->replace_route($MyRTableID, '0.0.0.0/0', array(
-                    'InstanceId' => $MyInstance
-                ));
-
-                if($response4->isOK())
+                if(isset($MyRTableID) && $MyRTableID != "")
                 {
-                  $successMsg="SUCCESS: VPCRouteMapper: Successfully set the default routes in private subnets to instance: ".$MyInstance.PHP_EOL;
-                  echo $successMsg;
-                  return $successMsg;
+                  echo "this is my route table id: ".$MyRTableID.PHP_EOL;
+                  $response4 = $ec2->replace_route($MyRTableID, '0.0.0.0/0', array(
+                      'InstanceId' => $MyInstance
+                  ));
+
+                  if($response4->isOK())
+                  {
+                    $successMsg="SUCCESS: VPCRouteMapper: Successfully set the default routes in private subnets to instance: ".$MyInstance.PHP_EOL;
+                    echo $successMsg;
+                    return $successMsg;
+                  }
+                  else
+                  {
+                    $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                    echo $failMsg;
+                    var_dump($response4->body);
+                    return $failMsg;
+                  }
                 }
                 else
                 {
-                  $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
-                  echo $failMsg;
-                  var_dump($response4->body);
-                  return $failMsg;
+                  echo "ERROR: this subnet has no associated routes\n";
+                  $response5 = $ec2->describe_route_tables(array(
+                      'Filter' => array(
+                        array('Name' => 'vpc-id', 'Value' => "$MyVPC"),
+                        array('Name' => 'association.main', 'Value' => 'true'),
+                    )
+                  ));
+                  echo "this is my current main routetable\n";
+                  
+                  if($response5->isOK())
+                  {
+                    #need the Route table id that we are going to modify.
+                    $MyRTableID2 = trim((string)$response5->body->routeTableSet->item->routeTableId);
+                    
+                    if(isset($MyRTableID2) && $MyRTableID2 != "")
+                    {
+                      echo "this is my route table id: ".$MyRTableID2.PHP_EOL;
+                      $response6 = $ec2->create_route($MyRTableID2, '0.0.0.0/0', array(
+                          'InstanceId' => $MyInstance
+                      ));
+
+                      if($response6->isOK())
+                      {
+                        $assignRoute2Sub = $ec2->associate_route_table($currentSubNet, $MyRTableID2);
+                        if($response6->isOK())
+                        {
+
+                          $successMsg="SUCCESS: VPCRouteMapper: Successfully set the default routes in private subnets to instance: ".$MyInstance.PHP_EOL;
+                          echo $successMsg;
+                          return $successMsg;
+                        }
+                        else
+                        {
+                          $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                          echo $failMsg;
+                          var_dump($assignRoute2Sub->body);
+                          return $failMsg;
+                        }
+                      }
+                      else
+                      {
+                        $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                        echo $failMsg;
+                        var_dump($response6->body);
+                        return $failMsg;
+                      }
+                    }
+                    else
+                    {
+                      $failMsg="FAIL: VPCRouteMapper: There was a problem setting the default routes." . PHP_EOL;
+                      echo $failMsg;
+                      var_dump($response5->body);
+                      return $failMsg;
+                    }
+                  }
                 }
               }
               else
